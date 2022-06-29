@@ -1,0 +1,52 @@
+/**
+ * 4 bit CLA using higher order Ps and Gs
+ */
+
+CHIP CLA2 {
+
+    IN x[4],y[4],c; 
+    OUT s[4],P,G;
+
+    PARTS:
+
+    //Propagate terms
+    Xor(a=x[0],b=y[0],out=p0);
+    Xor(a=x[1],b=y[1],out=p1);
+    Xor(a=x[2],b=y[2],out=p2);
+    Xor(a=x[3],b=y[3],out=p3);
+
+    //Generate terms
+    And(a=x[0],b=y[0],out=g0);
+    And(a=x[1],b=y[1],out=g1);
+    And(a=x[2],b=y[2],out=g2);
+    And(a=x[3],b=y[3],out=g3);
+
+    //generating the higher order Propagate term
+    And4(a=p0, b=p1, c=p2, d=p3, out=P); 
+
+    //generating the higher order Generate term
+    And4(a=p3, b=p2, c=p1, d=g0, out=k1);
+    And3(a=p3, b=p2, c=g1, out=k2);
+    And(a=p3, b=g2, out=k3);
+    Or4(a=k1, b=k2, c=k3, d=g3, out=G); 
+
+    //generating the internal carries
+    And(a=p0,b=c,out=r0);               
+    Or(a=r0,b=g0,out=c1);    //c1=p0c+g0   
+
+    And3(a=p1,b=p0,c=c,out=r1);
+    And(a=p1,b=g0,out=r2);
+    Or3(a=r1,b=r2,c=g1,out=c2);    //c2=p1p0c+p1g0+g1
+    
+    And4(a=p2,b=p1,c=p0,d=c,out=r3);
+    And3(a=p2,b=p1,c=g0,out=r4);
+    And(a=p2,b=g1,out=r5);
+    Or4(a=r3,b=r4,c=r5,d=g2,out=c3);   //c3=p2p1p0c+p2p1g0+p2g1+g2  
+
+    //generating the sum bits
+    Xor(a=p0,b=c,out=s[0]);             
+    Xor(a=p1,b=c1,out=s[1]);
+    Xor(a=p2,b=c2,out=s[2]);
+    Xor(a=p3,b=c3,out=s[3]);     
+ 
+}

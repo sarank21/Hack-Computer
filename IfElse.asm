@@ -1,0 +1,13 @@
+@a
+D=M
+@b
+D=D-M
+@END_IF
+D;JGT
+@b
+D=M
+@a
+D=D-M
+(END_IF)
+@c
+M=D

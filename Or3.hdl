@@ -1,0 +1,12 @@
+/**
+ * 3 input Or gate: 
+**/
+
+CHIP Or3 {
+    IN a,b,c;
+    OUT out;
+
+    PARTS:
+    Or(a=a,b=b,out=w1);
+    Or(a=c,b=w1,out=out);
+}

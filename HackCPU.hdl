@@ -1,0 +1,62 @@
+/**
+ * Hack CPU built using HACK ALU
+ **/
+
+CHIP HackCPU {
+
+    IN instruction[16], //instruction to be executed
+       inM[16],         //instruction's M input
+       reset;           //signal whether to continue execution or restart the program
+
+    OUT outM[16],       //instruction's M output
+        writeM,         //whether to write to memory or not
+        pc[15],         //address of next instruction
+        addressM[15];   //in which address to write
+             
+    PARTS:
+    
+    Not(in=instruction[15],out=nI15);
+
+    //Mux1
+    Mux16bit2to1(x0=ALUout,x1=instruction,s=nI15,y=Ain);
+
+    //A Register
+    And(a=instruction[15],b=instruction[5],out=wa);
+    Or(a=nI15,b=wa,out=writeA);
+    ARegister(in=Ain,load=writeA,out[0..14]=addressM,out=Aout);
+
+    //D Register
+    And(a=instruction[15],b=instruction[4],out=writeD);
+    DRegister(in=ALUout,load=writeD,out=Dout);
+    
+    //Mux2
+    And(a=instruction[15],b=instruction[12],out=S2);
+    Mux16bit2to1(x0=Aout,x1=inM,s=S2,y=ALUyin);
+
+    //generating writeM
+    And(a=instruction[15],b=instruction[3],out=writeM);
+
+    //passing control signals and required operands to the ALU
+    HackALU(x=Dout,y=ALUyin,zx=instruction[11],nx=instruction[10],zy=instruction[9],ny=instruction[8],f=instruction[7],no=instruction[6],zr=zr,ng=ng,out=ALUout,out=outM);
+
+    //to check if there is a jump
+    Not(in=instruction[0],out=nI0);
+    Not(in=instruction[1],out=nI1);
+    Not(in=instruction[2],out=nI2);
+    Not(in=zr,out=nzr);
+    Not(in=ng,out=nng);
+    And5(a=nI2,b=nI1,c=instruction[0],d=nzr,e=nng,out=jgt);
+    And4(a=nI2,b=instruction[1],c=nI0,d=zr,out=jeq);
+    And5(a=nI2,b=instruction[1],c=instruction[0],d=zr,e=nng,out=jge);
+    And5(a=instruction[2],b=nI1,c=nI0,d=nzr,e=ng,out=jlt);
+    And4(a=instruction[2],b=nI1,c=instruction[0],d=nzr,out=jne);
+    And5(a=instruction[2],b=instruction[1],c=nI0,d=zr,e=ng,out=jle);
+    And3(a=instruction[2],b=instruction[1],c=instruction[0],out=jmp);
+    Or4(a=jgt,b=jeq,c=jge,d=jlt,out=t0);
+    Or3(a=jne,b=jle,c=jmp,out=t1);
+    Or(a=t0,b=t1,out=t2);
+    And(a=instruction[15],b=t2,out=J); //J=1 if a jump has to be carried out
+    
+    //program counter
+    PC(in=Aout,load=J,inc=true,reset=reset,out[0..14]=pc);
+}

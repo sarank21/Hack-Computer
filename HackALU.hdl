@@ -1,0 +1,26 @@
+/**
+ * Hack ALU
+ * Inputs: x,y    Control Signals: zx,nx,zy,ny,f,no
+ * Output: out    Status Bits: zr,ng
+ **/
+
+CHIP HackALU {
+
+    IN x[16],y[16],zx,nx,zy,ny,f,no; 
+    OUT out[16],zr,ng;               
+    PARTS:
+    
+    Mux16bit2to1(x0=x,x1=false,s=zx,y=wx);   //select x or 0 according to zx input
+    Mux16bit2to1(x0=y,x1=false,s=zy,y=wy);   //select y or 0 according to zy input
+
+    Xor16(a=wx,b=nx,out=p);    //if nx=1, then p is bitwise complement of input
+    Xor16(a=wy,b=ny,out=q);    //if ny=1, then q is bitwise complement of input
+
+    Adder16(x=p,y=q,s=s);    //s = p+q
+    And16bit(x=p,y=q,z=a);   //a = p&q
+    Mux16bit2to1(x0=a,x1=s,s=f,y=r);    //if f=1, r = p+q, if f=0, r = p&q
+
+    //if no=1, output is !r, else output is r
+    Xor16(a=r,b=no,out=t,out=out,out[15]=ng);   //ng=1 if r<0, ng=0 otherwise
+    ZrGen(x=t,out=zr);    //zr=1 if r=0, zr=0 otherwise
+}

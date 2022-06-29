@@ -1,0 +1,40 @@
+/**
+ * 4 bit CLA based 16-bit adder using higher level propagate and generate terms
+ */
+
+CHIP Adder16 {
+
+    IN x[16], y[16]; 
+    OUT s[16];
+
+    PARTS:
+
+    //higher level propagate and generate terms using 4-bit CLA
+    CLA2(x=x[0..3],y[0]=y[0],y[1]=y[1],y[2]=y[2],y[3]=y[3],P=P0,G=G0);
+    CLA2(x=x[4..7],y[0]=y[4],y[1]=y[5],y[2]=y[6],y[3]=y[7],P=P1,G=G1);
+    CLA2(x=x[8..11],y[0]=y[8],y[1]=y[9],y[2]=y[10],y[3]=y[11],P=P2,G=G2);
+    CLA2(x=x[12..15],y[0]=y[12],y[1]=y[13],y[2]=y[14],y[3]=y[15],P=P3,G=G3);
+
+    //generating carries c4, c8, c12 and c16
+    And(a=P0, b=false, out=t1);
+    Or(a=t1, b=G0, out=c4);
+    And3(a=P0, b=P1, c=false, out=q1);
+    And(a=P1, b=G0, out=q2);
+    Or3(a=q1, b=q2, c=G1, out=c8);
+    And4(a=P2, b=P1, c=P0, d=false, out=w1);
+    And3(a=P2, b=P1, c=G0, out=w2);
+    And(a=P2, b=G1, out=w3);
+    Or4(a=w1, b=w2, c=w3, d=G2, out=c12);
+    And5(a=P3, b=P2, c=P1, d=P0, e=false, out=m1);
+    And4(a=P3, b=P2, c=P1, d=G0, out=m2);
+    And3(a=P3, b=P2, c=G1, out=m3);
+    And(a=P3, b=G2, out=m4);
+    Or5(a=m1, b=m2, c=m3, d=m4, e=G3, out=c16);
+
+    //generating sum bits using 4-bit CLA 
+    CLA2(x=x[0..3],y[0]=y[0],y[1]=y[1],y[2]=y[2],y[3]=y[3],c=false,s=s[0..3]);
+    CLA2(x=x[4..7],y[0]=y[4],y[1]=y[5],y[2]=y[6],y[3]=y[7],c=c4,s=s[4..7]);
+    CLA2(x=x[8..11],y[0]=y[8],y[1]=y[9],y[2]=y[10],y[3]=y[11],c=c8,s=s[8..11]);
+    CLA2(x=x[12..15],y[0]=y[12],y[1]=y[13],y[2]=y[14],y[3]=y[15],c=c12,s=s[12..15]);
+        
+}
